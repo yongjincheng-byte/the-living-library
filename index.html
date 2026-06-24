@@ -42,6 +42,7 @@
         let currentLang = "english"; 
         let isReading = false; 
         let lastTargetPage = ""; 
+        let lastNavTime = 0; // TIME GATE: Tracks the exact millisecond of the last page change
         
         function playBeep() {
             try {
@@ -69,14 +70,23 @@
             currentHerb = "home";
             currentLang = "english";
             lastTargetPage = "english"; 
+            lastNavTime = Date.now();
             document.getElementById('status').innerText = "Presentation tab opened!";
         }
 
         function navigateDisplay(scanResult) {
+            const currentTime = Date.now();
+            
+            // --- TIME GATE LIMITER ---
+            // If a command arrives within 1.5 seconds of the last page swap, destroy it instantly.
+            // This completely wipes out background tab flooding and analog key drifting.
+            if (currentTime - lastNavTime < 1500) {
+                console.log("🛡️ Time-Gate blocked rapid chatter/backlog:", scanResult);
+                return; 
+            }
+
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
 
-            // --- HARDWARE SHIELD FILTER ---
-            // Intentionally extract only perfectly matched commands to drop typos like 'wolberry'
             let validLang = null;
             let validHerb = null;
 
@@ -92,10 +102,8 @@
             else if (cleanScan.includes("lemongrass")) validHerb = "lemongrass";
             else if (cleanScan.includes("home")) validHerb = "home";
 
-            // If the message was mangled hardware noise or unreadable, drop it silently
             if (!validLang && !validHerb) return;
 
-            // Apply successfully verified items to state
             if (validLang) currentLang = validLang;
             if (validHerb) currentHerb = validHerb;
 
@@ -135,12 +143,13 @@
                 else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
-            // CHATTER BLOCKER: If this matches the page we are already viewing, exit immediately
             if (targetPage === lastTargetPage) return; 
 
-            // SUCCESS! A real, verified navigation update occurred.
-            console.log(`🎯 Active Page Switched -> Herb: ${currentHerb}, Lang: ${currentLang}`);
+            // Update safety states
+            lastNavTime = currentTime; 
+            lastTargetPage = targetPage; 
             
+            console.log(`🎯 Page Switched -> Herb: ${currentHerb}, Lang: ${currentLang}`);
             playBeep();
             triggerVisualFlash();
 
@@ -149,7 +158,6 @@
                 statusEl.innerText = `🔄 Loading: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})...`;
             }
 
-            lastTargetPage = targetPage; 
             window.open(baseUrl + targetPage, "LibraryDisplayTab");
         }
 
