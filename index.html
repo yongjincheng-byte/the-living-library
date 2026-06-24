@@ -27,13 +27,25 @@
     <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open The Living Library</button>
 
     <script>
-        // --- GLOBAL STATES ---
         let currentHerb = "home"; 
         let currentLang = "english"; 
+        let isReading = false; // Prevents duplicate background loops
+
+        // --- AUTOMATIC AUTO-CONNECT ON PAGE LOAD ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const ports = await navigator.serial.getPorts();
+                if (ports.length > 0) {
+                    document.getElementById('status').innerText = "🔄 Auto-connecting to known scanner...";
+                    await readSerialStream(ports[0]);
+                }
+            } catch (err) {
+                console.log("Auto-connect skipped (Requires initial manual click):", err);
+            }
+        });
 
         // --- 1. DISPLAY MANAGEMENT ---
         function openDisplay() {
-            // Updated directly to your main home URL with no spaces in the window name target
             window.open("https://sites.google.com/students.edu.sg/the-living-library/home", "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
@@ -41,13 +53,10 @@
         }
 
         function navigateDisplay(scanResult) {
-            // Strip out ANY hidden quotes or weird formatting MakeCode might add
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            
-            // This prints to the console so we can see EXACTLY what the Micro:bit sends
-            console.log("Micro:bit sent:", cleanScan);
+            console.log("Buffered Message Received:", cleanScan);
 
-            // 1. LANGUAGE BUTTONS (A, B, C, E)
+            // 1. LANGUAGE ROUTING
             if (cleanScan.includes("english") || cleanScan === "a") {
                 currentLang = "english";
             } else if (cleanScan.includes("chinese") || cleanScan === "b") {
@@ -57,7 +66,7 @@
             } else if (cleanScan.includes("tamil") || cleanScan === "e") {
                 currentLang = "tamil";
             } 
-            // 2. HERB SCANNER 
+            // 2. HERB ROUTING
             else if (cleanScan.includes("laksa")) {
                 currentHerb = "laksa";
             } else if (cleanScan.includes("pandan")) {
@@ -71,11 +80,9 @@
             } else if (cleanScan.includes("home")) {
                 currentHerb = "home";
             } else {
-                // If the Micro:bit sends garbage data, ignore it so the page doesn't glitch
-                return;
+                return; 
             }
 
-            // 3. BUILD THE TARGET URL
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
@@ -112,7 +119,6 @@
                 else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
-            // 4. EXECUTE REDIRECT (Strictly single-word target name)
             window.open(baseUrl + targetPage, "LibraryDisplayTab");
             
             const statusEl = document.getElementById('status');
@@ -121,18 +127,26 @@
             }
         }
 
-        // --- 2. REAL HARDWARE USB CONNECTION ---
+        // --- 2. HARDWARE USB CONNECTION ---
         async function startController() {
             try {
                 let port;
                 const ports = await navigator.serial.getPorts();
                 if (ports.length > 0) {
                     port = ports[0]; 
-                    document.getElementById('status').innerText = "🔄 Auto-connecting to known scanner...";
                 } else {
                     port = await navigator.serial.requestPort();
                 }
+                await readSerialStream(port);
+            } catch (err) {
+                document.getElementById('status').innerText = "❌ Connection failed. Is it plugged in?";
+            }
+        }
 
+        async function readSerialStream(port) {
+            if (isReading) return; // Prevent breaking active listeners
+            try {
+                isReading = true;
                 await port.open({ baudRate: 115200 });
                 document.getElementById('status').innerText = "✅ Scanner Connected! Listening...";
                 
@@ -147,14 +161,18 @@
                     if (done) break;
                     
                     incomingData += value;
-                    if (incomingData.includes('\n')) {
-                        let scanResult = incomingData.trim();
-                        navigateDisplay(scanResult); 
-                        incomingData = ""; 
+                    let lines = incomingData.split("\n");
+                    incomingData = lines.pop(); 
+                    
+                    for (let line of lines) {
+                        if (line.trim()) {
+                            navigateDisplay(line); 
+                        }
                     }
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Connection failed. Is it plugged in?";
+                isReading = false;
+                document.getElementById('status').innerText = "❌ Connection lost. Replug USB.";
             }
         }
     </script>
