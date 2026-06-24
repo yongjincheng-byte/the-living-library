@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Living Library Controller</title>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px;}
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; transition: background-color 0.1s ease; }
         .button-row { display: flex; flex-direction: row; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
         button { padding: 15px 40px; font-size: 20px; background: white; color: #2E8B57; border: none; border-radius: 40px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s; }
         button:hover { transform: scale(1.05); }
-        #status { margin-top: 15px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
+        #status { margin-top: 15px; font-size: 1.8rem; font-weight: bold; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 10px; min-width: 300px; }
         details { background: rgba(255, 255, 255, 0.1); border: 2px solid white; border-radius: 15px; padding: 15px; width: 90%; max-width: 550px; margin-top: 15px; box-sizing: border-box; }
         summary { font-size: 22px; font-weight: bold; cursor: pointer; user-select: none; }
         ol { text-align: left; display: inline-block; margin: 15px 0 0 0; padding-left: 25px; font-size: 18px; line-height: 1.6; }
+        .flash-active { background-color: #1e5d3a !important; }
     </style>
 </head>
 <body>
@@ -41,6 +42,27 @@
         let currentLang = "english"; 
         let isReading = false; 
         let lastTargetPage = ""; 
+        
+        function playBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); 
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {}
+        }
+
+        function triggerVisualFlash() {
+            document.body.classList.add('flash-active');
+            setTimeout(() => { document.body.classList.remove('flash-active'); }, 100);
+        }
 
         function openDisplay() {
             window.open("https://sites.google.com/students.edu.sg/the-living-library/home", "LibraryDisplayTab");
@@ -52,34 +74,30 @@
 
         function navigateDisplay(scanResult) {
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            console.log("Processing Command:", cleanScan);
 
-            // 1. LANGUAGE ROUTING
-            if (cleanScan.includes("english") || cleanScan === "a") {
-                currentLang = "english";
-            } else if (cleanScan.includes("chinese") || cleanScan === "b") {
-                currentLang = "chinese";
-            } else if (cleanScan.includes("malay") || cleanScan === "c") {
-                currentLang = "malay";
-            } else if (cleanScan.includes("tamil") || cleanScan === "e") {
-                currentLang = "tamil";
-            } 
-            // 2. HERB ROUTING
-            else if (cleanScan.includes("laksa")) {
-                currentHerb = "laksa";
-            } else if (cleanScan.includes("pandan")) {
-                currentHerb = "pandan";
-            } else if (cleanScan.includes("wolfberry")) {
-                currentHerb = "wolfberry";
-            } else if (cleanScan.includes("celery")) {
-                currentHerb = "celery";
-            } else if (cleanScan.includes("lemongrass")) {
-                currentHerb = "lemongrass";
-            } else if (cleanScan.includes("home")) {
-                currentHerb = "home";
-            } else {
-                return; 
-            }
+            // --- HARDWARE SHIELD FILTER ---
+            // Intentionally extract only perfectly matched commands to drop typos like 'wolberry'
+            let validLang = null;
+            let validHerb = null;
+
+            if (cleanScan.includes("english") || cleanScan === "a") validLang = "english";
+            else if (cleanScan.includes("chinese") || cleanScan === "b") validLang = "chinese";
+            else if (cleanScan.includes("malay") || cleanScan === "c") validLang = "malay";
+            else if (cleanScan.includes("tamil") || cleanScan === "e") validLang = "tamil";
+            
+            if (cleanScan.includes("laksa")) validHerb = "laksa";
+            else if (cleanScan.includes("pandan")) validHerb = "pandan";
+            else if (cleanScan.includes("wolfberry")) validHerb = "wolfberry";
+            else if (cleanScan.includes("celery")) validHerb = "celery";
+            else if (cleanScan.includes("lemongrass")) validHerb = "lemongrass";
+            else if (cleanScan.includes("home")) validHerb = "home";
+
+            // If the message was mangled hardware noise or unreadable, drop it silently
+            if (!validLang && !validHerb) return;
+
+            // Apply successfully verified items to state
+            if (validLang) currentLang = validLang;
+            if (validHerb) currentHerb = validHerb;
 
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
@@ -117,15 +135,22 @@
                 else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
+            // CHATTER BLOCKER: If this matches the page we are already viewing, exit immediately
             if (targetPage === lastTargetPage) return; 
+
+            // SUCCESS! A real, verified navigation update occurred.
+            console.log(`🎯 Active Page Switched -> Herb: ${currentHerb}, Lang: ${currentLang}`);
+            
+            playBeep();
+            triggerVisualFlash();
+
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.innerText = `🔄 Loading: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})...`;
+            }
 
             lastTargetPage = targetPage; 
             window.open(baseUrl + targetPage, "LibraryDisplayTab");
-            
-            const statusEl = document.getElementById('status');
-            if (statusEl) {
-                statusEl.innerText = `Current Page: ${currentHerb} (${currentLang})`;
-            }
         }
 
         async function startController() {
@@ -133,11 +158,8 @@
             try {
                 let port;
                 const ports = await navigator.serial.getPorts();
-                if (ports.length > 0) {
-                    port = ports[0]; 
-                } else {
-                    port = await navigator.serial.requestPort();
-                }
+                if (ports.length > 0) port = ports[0]; 
+                else port = await navigator.serial.requestPort();
                 
                 isReading = true;
                 await port.open({ baudRate: 115200 });
@@ -146,7 +168,6 @@
                 const textDecoder = new TextDecoderStream();
                 port.readable.pipeTo(textDecoder.writable);
                 const reader = textDecoder.readable.getReader();
-                
                 let incomingData = "";
                 
                 while (true) {
@@ -157,9 +178,6 @@
                     let lines = incomingData.split("\n");
                     incomingData = lines.pop(); 
                     
-                    // --- THE TRAFFIC JAM FIX ---
-                    // Instead of executing every single line in the backlog, we sweep backward,
-                    // grab ONLY the absolute newest command, and delete the rest of the pile.
                     let latestLine = "";
                     for (let i = lines.length - 1; i >= 0; i--) {
                         if (lines[i].trim()) {
@@ -167,14 +185,11 @@
                             break;
                         }
                     }
-                    
-                    if (latestLine) {
-                        navigateDisplay(latestLine); 
-                    }
+                    if (latestLine) navigateDisplay(latestLine); 
                 }
             } catch (err) {
                 isReading = false;
-                document.getElementById('status').innerText = "❌ Connection failed. Replug USB or close other tabs.";
+                document.getElementById('status').innerText = "❌ Connection failed. Replug USB.";
             }
         }
     </script>
