@@ -5,11 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Living Library | Kiosk Controller</title>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; }
+        body { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 100vh; background-color: #2E8B57; color: white; 
+            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; 
+        }
         h1 { font-size: 3rem; margin-bottom: 10px; }
-        .instructions { background: rgba(255,255,255,0.15); padding: 25px; border-radius: 20px; width: 80%; max-width: 600px; text-align: left; margin-bottom: 30px; }
+        .instructions { 
+            background: rgba(255,255,255,0.15); padding: 25px; border-radius: 20px; 
+            width: 80%; max-width: 600px; text-align: left; margin-bottom: 30px; 
+        }
         .btn-group { display: flex; gap: 20px; margin-top: 10px; }
-        button { padding: 15px 30px; font-size: 18px; background: white; color: #2E8B57; border: none; border-radius: 40px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; }
+        button { 
+            padding: 15px 30px; font-size: 18px; background: white; color: #2E8B57; 
+            border: none; border-radius: 40px; cursor: pointer; font-weight: bold; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; 
+        }
         button:hover { transform: scale(1.05); background: #f0f0f0; }
         #status { margin-top: 30px; font-size: 1.2rem; padding: 15px; border-radius: 10px; background: rgba(0,0,0,0.2); }
     </style>
@@ -17,18 +28,20 @@
 <body>
 
     <h1>🌿 The Living Library</h1>
+    
     <div class="instructions">
         <h3>How to operate:</h3>
         <ol>
-            <li>Connect Scanner and Launch Kiosk.</li>
-            <li>Scan a Language card to switch languages.</li>
-            <li>Scan a Plant card to identify the herb in your current language.</li>
+            <li>Ensure the Scanner is plugged into the laptop USB port.</li>
+            <li>Click "Connect to the Living Library" to initialize the hardware.</li>
+            <li>Click "Launch the Living Library Website" to open the display tab.</li>
+            <li>Follow the instructions provided in the library website tabs.</li>
         </ol>
     </div>
 
     <div class="btn-group">
-        <button onclick="startController()">Connect Scanner</button>
-        <button onclick="openDisplay()">Launch Kiosk</button>
+        <button onclick="startController()">Connect to the Living Library</button>
+        <button onclick="openDisplay()">Launch the Living Library Website</button>
     </div>
 
     <div id="status">Waiting for connection...</div>
@@ -48,37 +61,58 @@
             window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
+            document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
             const input = scanResult.toLowerCase();
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             
-            // 1. Identify intent (Language vs Herb vs Home)
+            // 1. Identify intent
             let isLanguage = ["english", "chinese", "malay", "tamil"].some(l => input.includes(l));
             let isHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].some(h => input.includes(h));
             let isHome = input.includes("home");
 
             // 2. Update state based on intent
             if (isLanguage) {
-                let newLang = ["english", "chinese", "malay", "tamil"].find(l => input.includes(l));
-                currentLang = newLang;
+                currentLang = ["english", "chinese", "malay", "tamil"].find(l => input.includes(l));
             } else if (isHerb) {
-                let newHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].find(h => input.includes(h));
-                currentHerb = newHerb;
+                currentHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].find(h => input.includes(h));
             } else if (isHome) {
                 currentHerb = "home";
             }
 
-            // 3. Get the correct path from our lookup table
+            // 3. Get the correct path
             let targetPage = paths[currentLang][currentHerb];
 
-            // 4. Execute
-            window.open(baseUrl + targetPage, "LibraryDisplayTab");
-            document.getElementById('status').innerText = `Displaying: ${currentHerb} in ${currentLang}`;
+            // 4. Execution
+            if (targetPage) {
+                window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
+            }
         }
 
-        // Serial connection logic... (keep your existing startController function)
+        async function startController() {
+            try {
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                document.getElementById('status').innerText = "✅ System Online: Scanner Ready";
+                
+                const reader = port.readable.getReader();
+                let incomingData = "";
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    incomingData += new TextDecoder().decode(value);
+                    if (incomingData.includes('\n')) {
+                        navigateDisplay(incomingData); 
+                        incomingData = ""; 
+                    }
+                }
+            } catch (err) {
+                document.getElementById('status').innerText = "❌ Connection Error";
+            }
+        }
     </script>
 </body>
 </html>
