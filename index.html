@@ -10,7 +10,7 @@
         button:hover { transform: scale(1.05); }
         #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
         .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
-        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; } /* Hidden until activated */
+        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
 
     <div class="box">
-        <h3>2. LIVE CAMERA ILLUSION (Optional)</h3>
+        <h3>2. LIVE CAMERA ILLUSION</h3>
         <button onclick="startWebcam()" style="font-size: 16px; padding: 10px 20px;">Turn on Laptop Camera</button>
         <br>
         <video id="webcam" autoplay playsinline></video>
@@ -35,77 +35,60 @@
     <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open Presentation Tab</button>
 
     <script>
-        // --- 1. DISPLAY MANAGEMENT ---
         function openDisplay() {
-            window.open("https://sites.google.com/students.edu.sg/the-living-library/view-herbs", "LibraryDisplayTab");
-            document.getElementById('status').innerText = "Presentation tab opened!";
+            window.open("https://sites.google.com/students.edu.sg/the-living-library/english", "LibraryDisplayTab");
         }
 
         function navigateDisplay(scanResult) {
-            // Map the herbs
-            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/view-herbs/";
+            // Updated to match your folder structure: /english/
+            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/english/";
             let targetPage = "";
+            const cleanScan = scanResult.trim().toLowerCase();
 
-            if (scanResult.includes("laksa")) targetPage = "laksa-leaf";
-            else if (scanResult.includes("pandan")) targetPage = "pandan-leaf";
-            else if (scanResult.includes("wolfberry")) targetPage = "wolfberry-leaf";
-            else if (scanResult.includes("celery")) targetPage = "chinese-celery";
-            else if (scanResult.includes("lemongrass")) targetPage = "lemongrass";
+            if (cleanScan.includes("laksa")) targetPage = "laksa-leaf";
+            else if (cleanScan.includes("pandan")) targetPage = "pandan-leaf";
+            else if (cleanScan.includes("wolfberry")) targetPage = "wolfberry-leaf";
+            else if (cleanScan.includes("celery")) targetPage = "chinese-celery";
+            else if (cleanScan.includes("lemongrass")) targetPage = "lemongrass";
 
-            // Instantly open the target page
             if (targetPage !== "") {
-                window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                const fullUrl = baseUrl + targetPage;
+                console.log("Navigating to: " + fullUrl);
+                window.open(fullUrl, "LibraryDisplayTab");
                 document.getElementById('status').innerText = "Last scanned: " + targetPage;
             }
         }
 
-        // --- 2. REAL HARDWARE USB CONNECTION (100% Instant) ---
         async function startController() {
             try {
-                let port;
-                const ports = await navigator.serial.getPorts();
-                if (ports.length > 0) {
-                    port = ports[0]; 
-                    document.getElementById('status').innerText = "🔄 Auto-connecting to known scanner...";
-                } else {
-                    port = await navigator.serial.requestPort();
-                }
-
+                const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ Scanner Connected! Listening...";
+                document.getElementById('status').innerText = "✅ Connected!";
                 
-                const textDecoder = new TextDecoderStream();
-                port.readable.pipeTo(textDecoder.writable);
-                const reader = textDecoder.readable.getReader();
-                
+                const reader = port.readable.getReader();
                 let incomingData = "";
                 
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
                     
-                    incomingData += value;
+                    incomingData += new TextDecoder().decode(value);
                     if (incomingData.includes('\n')) {
-                        let scanResult = incomingData.trim().toLowerCase();
-                        navigateDisplay(scanResult); 
+                        navigateDisplay(incomingData); 
                         incomingData = ""; 
                     }
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Connection failed. Is it plugged in?";
+                document.getElementById('status').innerText = "❌ Error: " + err.message;
             }
         }
 
-        // --- 3. THE MAGIC WEBCAM ILLUSION ---
         function startWebcam() {
-            const videoElement = document.getElementById('webcam');
             navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    videoElement.style.display = "block"; // Unhide the video box
-                    videoElement.srcObject = stream;
-                })
-                .catch(function(err) {
-                    alert("Could not find a webcam! Make sure you gave the browser permission when asked.");
+                .then(stream => {
+                    const v = document.getElementById('webcam');
+                    v.style.display = "block";
+                    v.srcObject = stream;
                 });
         }
     </script>
