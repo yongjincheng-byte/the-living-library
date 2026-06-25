@@ -33,15 +33,15 @@
         <h3>How to operate:</h3>
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
-            <li>Click "Connect to the Living Library" to initialize the hardware.</li>
-            <li>Click "Launch the Living Library Website" to open the display tab.</li>
-            <li>Follow the instructions provided in the following websites.</li>
+            <li>Click "Connect Scanner" to initialize the hardware.</li>
+            <li>Press "Launch Kiosk" to open the display tab.</li>
+            <li>Follow the instructions provided in the library website tabs.</li>
         </ol>
     </div>
 
     <div class="btn-group">
-        <button onclick="startController()">Connect to the Living Library</button>
-        <button onclick="openDisplay()">Launch the Living Library Website</button>
+        <button onclick="startController()">Connect Scanner</button>
+        <button onclick="openDisplay()">Launch Kiosk</button>
     </div>
 
     <div id="status">Waiting for connection...</div>
@@ -51,16 +51,13 @@
         let currentLang = "english"; 
 
         function openDisplay() {
-            // Launches the main library landing page
-            window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
-            currentHerb = "home";
-            document.getElementById('status').innerText = "Presentation tab launched at Home!";
+            navigateDisplay("home");
+            document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
             const scanLower = scanResult.toLowerCase();
 
-            // 1. Update states
             if (scanLower.includes("english")) currentLang = "english";
             else if (scanLower.includes("chinese")) currentLang = "chinese";
             else if (scanLower.includes("malay")) currentLang = "malay";
@@ -75,32 +72,25 @@
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
-            // 2. Determine target path based on state
-            if (currentHerb === "home") {
-                if (currentLang === "english") targetPage = "english";
-                else if (currentLang === "chinese") targetPage = "%E4%B8%AD%E6%96%87";
-                else if (currentLang === "malay") targetPage = "bahasa-melayu";
-                else if (currentLang === "tamil") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4";
-            } else if (currentLang === "english") {
-                if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
+            if (currentLang === "english") {
+                if (currentHerb === "home") targetPage = "english";
+                else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
                 else if (currentHerb === "pandan") targetPage = "english/pandan-leaf";
                 else if (currentHerb === "wolfberry") targetPage = "english/wolfberry-leaf";
                 else if (currentHerb === "celery") targetPage = "english/chinese-celery";
                 else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
-            }
+            } 
+            // Add other languages here...
 
-            // 3. Execution (Triggers tab navigation)
-            if (targetPage !== "") {
-                window.open(baseUrl + targetPage, "LibraryDisplayTab");
-                document.getElementById('status').innerText = `Active: ${currentHerb} in ${currentLang}`;
-            }
+            window.open(baseUrl + targetPage, "LibraryDisplayTab");
+            document.getElementById('status').innerText = `Active: ${currentHerb} in ${currentLang}`;
         }
 
         async function startController() {
             try {
                 const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ System Online";
+                document.getElementById('status').innerText = "✅ System Online: Scanner Ready";
                 
                 const reader = port.readable.getReader();
                 let incomingData = "";
