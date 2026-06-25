@@ -10,11 +10,12 @@
         button:hover { transform: scale(1.05); }
         #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
         .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
+        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; } /* Hidden until activated */
     </style>
 </head>
 <body>
 
-    <h1>🌿 The Living Library</h1>
+    <h1>🌿 The Living Library Scanner</h1>
     <p>Keep this tab open in the background to listen to the hardware.</p>
 
     <div class="box">
@@ -22,124 +23,61 @@
         <button onclick="startController()">Connect Physical Scanner (USB)</button>
         <div id="status">Waiting for connection...</div>
     </div>
+
+    <div class="box">
+        <h3>2. LIVE CAMERA ILLUSION (Optional)</h3>
+        <button onclick="startWebcam()" style="font-size: 16px; padding: 10px 20px;">Turn on Laptop Camera</button>
+        <br>
+        <video id="webcam" autoplay playsinline></video>
+    </div>
     
     <br>
     <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open Presentation Tab</button>
 
     <script>
-        let currentHerb = "home"; 
-        let currentLang = "english"; 
-        
-        // ⏳ TIMELOCK VARIABLES
-        let lastActionTime = 0; 
-        const COOLDOWN_MS = 1500; // 1.5 seconds of absolute silence after any action
-
+        // --- 1. DISPLAY MANAGEMENT ---
         function openDisplay() {
-            window.open("https://sites.google.com/students.edu.sg/the-living-library/home", "LibraryDisplayTab");
-            currentHerb = "home";
-            currentLang = "english";
+            window.open("https://sites.google.com/students.edu.sg/the-living-library/view-herbs", "LibraryDisplayTab");
             document.getElementById('status').innerText = "Presentation tab opened!";
         }
 
         function navigateDisplay(scanResult) {
-            // ⏳ Check the Time-Lock Shield first!
-            let now = Date.now();
-            if (now - lastActionTime < COOLDOWN_MS) {
-                console.log("🛡️ Cooldown active. Ignoring hardware bounce.");
-                return; 
-            }
-
-            const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            if (!cleanScan) return;
-
-            // 1. CHECK HERBS FIRST 
-            if (cleanScan.includes("lak") || cleanScan.includes("ksa")) {
-                currentHerb = "laksa";
-            } else if (cleanScan.includes("pan") || cleanScan.includes("dan")) {
-                currentHerb = "pandan";
-            } else if (cleanScan.includes("wol") || cleanScan.includes("ber")) {
-                currentHerb = "wolfberry"; 
-            } else if (cleanScan.includes("cel") || cleanScan.includes("ery")) {
-                currentHerb = "celery";
-            } else if (cleanScan.includes("lem") || cleanScan.includes("gra")) {
-                currentHerb = "lemongrass";
-            } else if (cleanScan.includes("hom") || cleanScan.includes("ome")) {
-                currentHerb = "home";
-            } 
-            // 2. CHECK LANGUAGES SECOND
-            else if (cleanScan.includes("eng") || cleanScan.includes("glish") || cleanScan === "a") {
-                currentLang = "english";
-            } else if (cleanScan.includes("chi") || cleanScan.includes("nese") || cleanScan === "b") {
-                currentLang = "chinese";
-            } else if (cleanScan.includes("mal") || cleanScan.includes("lay") || cleanScan === "c") {
-                currentLang = "malay";
-            } else if (cleanScan.includes("tam") || cleanScan.includes("mil") || cleanScan === "e") {
-                currentLang = "tamil";
-            } else {
-                return; // Ignore noise
-            }
-
-            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
+            // Map the herbs
+            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/view-herbs/";
             let targetPage = "";
 
-            if (currentLang === "english") {
-                if (currentHerb === "home") targetPage = "home"; 
-                else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
-                else if (currentHerb === "pandan") targetPage = "english/pandan-leaf";
-                else if (currentHerb === "wolfberry") targetPage = "english/wolfberry-leaf";
-                else if (currentHerb === "celery") targetPage = "english/chinese-celery";
-                else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
-            } 
-            // ... (All other language route logic remains exactly the same as the last version)
-            else if (currentLang === "chinese") {
-                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; 
-                else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
-                else if (currentHerb === "pandan") targetPage = "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6";
-                else if (currentHerb === "wolfberry") targetPage = "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6";
-                else if (currentHerb === "celery") targetPage = "%E4%B8%AD%E6%96%87/%E8%8A%B9%E8%8F%9C";
-                else if (currentHerb === "lemongrass") targetPage = "%E4%B8%AD%E6%96%87/%E9%A6%99%E8%8C%85";
-            } 
-            else if (currentLang === "malay") {
-                if (currentHerb === "home") targetPage = "bahasa-melayu"; 
-                else if (currentHerb === "laksa") targetPage = "bahasa-melayu/daun-laksa";
-                else if (currentHerb === "pandan") targetPage = "bahasa-melayu/daun-pandan";
-                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun-goji";
-                else if (currentHerb === "celery") targetPage = "bahasa-melayu/saderi-cina";
-                else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
-            } 
-            else if (currentLang === "tamil") {
-                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; 
-                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
-                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
-                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
-                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery";
-                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
-            }
+            if (scanResult.includes("laksa")) targetPage = "laksa-leaf";
+            else if (scanResult.includes("pandan")) targetPage = "pandan-leaf";
+            else if (scanResult.includes("wolfberry")) targetPage = "wolfberry-leaf";
+            else if (scanResult.includes("celery")) targetPage = "chinese-celery";
+            else if (scanResult.includes("lemongrass")) targetPage = "lemongrass";
 
+            // Instantly open the target page
             if (targetPage !== "") {
-                let fullNewUrl = baseUrl + targetPage;
-                console.log("🚀 Switching to:", fullNewUrl);
-                window.open(fullNewUrl, "LibraryDisplayTab");
-                document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
-                
-                // ⏳ Lock the shield! The code will ignore hardware for the next 1500ms
-                lastActionTime = Date.now(); 
+                window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                document.getElementById('status').innerText = "Last scanned: " + targetPage;
             }
         }
 
+        // --- 2. REAL HARDWARE USB CONNECTION (100% Instant) ---
         async function startController() {
             try {
                 let port;
                 const ports = await navigator.serial.getPorts();
-                if (ports.length > 0) port = ports[0]; 
-                else port = await navigator.serial.requestPort();
+                if (ports.length > 0) {
+                    port = ports[0]; 
+                    document.getElementById('status').innerText = "🔄 Auto-connecting to known scanner...";
+                } else {
+                    port = await navigator.serial.requestPort();
+                }
 
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ Link Active! Listening to Port...";
+                document.getElementById('status').innerText = "✅ Scanner Connected! Listening...";
                 
                 const textDecoder = new TextDecoderStream();
                 port.readable.pipeTo(textDecoder.writable);
                 const reader = textDecoder.readable.getReader();
+                
                 let incomingData = "";
                 
                 while (true) {
@@ -147,19 +85,28 @@
                     if (done) break;
                     
                     incomingData += value;
-                    
                     if (incomingData.includes('\n')) {
-                        let lines = incomingData.split('\n');
-                        incomingData = lines.pop(); 
-                        
-                        for (let line of lines) {
-                            if (line.trim()) navigateDisplay(line); 
-                        }
+                        let scanResult = incomingData.trim().toLowerCase();
+                        navigateDisplay(scanResult); 
+                        incomingData = ""; 
                     }
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Connection failed. Check hardware port connection.";
+                document.getElementById('status').innerText = "❌ Connection failed. Is it plugged in?";
             }
+        }
+
+        // --- 3. THE MAGIC WEBCAM ILLUSION ---
+        function startWebcam() {
+            const videoElement = document.getElementById('webcam');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoElement.style.display = "block"; // Unhide the video box
+                    videoElement.srcObject = stream;
+                })
+                .catch(function(err) {
+                    alert("Could not find a webcam! Make sure you gave the browser permission when asked.");
+                });
         }
     </script>
 </body>
