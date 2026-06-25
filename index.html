@@ -61,31 +61,23 @@
             window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
-            document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
             const input = scanResult.toLowerCase();
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             
-            // 1. Identify intent
-            let isLanguage = ["english", "chinese", "malay", "tamil"].some(l => input.includes(l));
-            let isHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].some(h => input.includes(h));
+            // Identify intent
+            let newLang = ["english", "chinese", "malay", "tamil"].find(l => input.includes(l));
+            let newHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].find(h => input.includes(h));
             let isHome = input.includes("home");
 
-            // 2. Update state based on intent
-            if (isLanguage) {
-                currentLang = ["english", "chinese", "malay", "tamil"].find(l => input.includes(l));
-            } else if (isHerb) {
-                currentHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].find(h => input.includes(h));
-            } else if (isHome) {
-                currentHerb = "home";
-            }
+            if (newLang) currentLang = newLang;
+            if (newHerb) currentHerb = newHerb;
+            if (isHome) currentHerb = "home";
 
-            // 3. Get the correct path
             let targetPage = paths[currentLang][currentHerb];
 
-            // 4. Execution
             if (targetPage) {
                 window.open(baseUrl + targetPage, "LibraryDisplayTab");
                 document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
@@ -99,14 +91,12 @@
                 document.getElementById('status').innerText = "✅ System Online: Scanner Ready";
                 
                 const reader = port.readable.getReader();
-                let incomingData = "";
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
-                    incomingData += new TextDecoder().decode(value);
-                    if (incomingData.includes('\n')) {
-                        navigateDisplay(incomingData); 
-                        incomingData = ""; 
+                    const text = new TextDecoder().decode(value);
+                    if (text.length > 0) {
+                        navigateDisplay(text);
                     }
                 }
             } catch (err) {
