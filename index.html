@@ -10,7 +10,6 @@
         button:hover { transform: scale(1.05); }
         #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
         .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
-        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -22,13 +21,6 @@
         <h3>1. REAL HARDWARE</h3>
         <button onclick="startController()">Connect Physical Scanner (USB)</button>
         <div id="status">Waiting for connection...</div>
-    </div>
-
-    <div class="box">
-        <h3>2. LIVE CAMERA ILLUSION (Optional)</h3>
-        <button onclick="startWebcam()" style="font-size: 16px; padding: 10px 20px;">Turn on Laptop Camera</button>
-        <br>
-        <video id="webcam" autoplay playsinline></video>
     </div>
     
     <br>
@@ -46,37 +38,38 @@
         }
 
         function navigateDisplay(scanResult) {
+            // Force clean lowercase conversion to fix casing mismatches
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            if (!cleanScan) return; // Drop completely empty strings
+            if (!cleanScan) return;
 
-            console.log("Executing Routing Logic For:", cleanScan);
+            console.log("👉 Matcher analyzing string:", cleanScan);
 
-            // Catch language identifiers (including hardware drops)
-            if (cleanScan.includes("engl") || cleanScan === "a") {
+            // Match language string fragments safely
+            if (cleanScan.includes("eng") || cleanScan === "a") {
                 currentLang = "english";
-            } else if (cleanScan.includes("chin") || cleanScan === "b") {
+            } else if (cleanScan.includes("chi") || cleanScan === "b") {
                 currentLang = "chinese";
-            } else if (cleanScan.includes("mala") || cleanScan === "c") {
+            } else if (cleanScan.includes("mal") || cleanScan === "c") {
                 currentLang = "malay";
-            } else if (cleanScan.includes("tami") || cleanScan === "e") {
+            } else if (cleanScan.includes("tam") || cleanScan === "e") {
                 currentLang = "tamil";
             } 
-            
-            // Catch herb identifiers (including hardware drops)
-            else if (cleanScan.includes("laks")) {
+            // Match herb string fragments safely
+            else if (cleanScan.includes("lak")) {
                 currentHerb = "laksa";
-            } else if (cleanScan.includes("pand")) {
+            } else if (cleanScan.includes("pan")) {
                 currentHerb = "pandan";
-            } else if (cleanScan.includes("wolf") || cleanScan.includes("wolb") || cleanScan.includes("woli")) {
+            } else if (cleanScan.includes("wol")) {
                 currentHerb = "wolfberry"; 
-            } else if (cleanScan.includes("cele") || cleanScan.includes("cely")) {
+            } else if (cleanScan.includes("cel") || cleanScan.includes("fce")) {
                 currentHerb = "celery";
-            } else if (cleanScan.includes("lemo") || cleanScan.includes("gong")) {
+            } else if (cleanScan.includes("lem") || cleanScan.includes("grass")) {
                 currentHerb = "lemongrass";
-            } else if (cleanScan.includes("home")) {
+            } else if (cleanScan.includes("hom")) {
                 currentHerb = "home";
             } else {
-                return; // Drop lines that don't match any system targets
+                console.log("⚠️ String recognized as unmapped noise:", cleanScan);
+                return; 
             }
 
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
@@ -102,79 +95,4 @@
                 if (currentHerb === "home") targetPage = "bahasa-melayu"; 
                 else if (currentHerb === "laksa") targetPage = "bahasa-melayu/daun-laksa";
                 else if (currentHerb === "pandan") targetPage = "bahasa-melayu/daun-pandan";
-                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun-goji";
-                else if (currentHerb === "celery") targetPage = "bahasa-melayu/saderi-cina";
-                else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
-            } 
-            else if (currentLang === "tamil") {
-                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; 
-                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
-                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
-                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
-                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery";
-                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
-            }
-
-            if (targetPage !== "") {
-                window.open(baseUrl + targetPage, "LibraryDisplayTab");
-                document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
-            }
-        }
-
-        async function startController() {
-            try {
-                let port;
-                const ports = await navigator.serial.getPorts();
-                if (ports.length > 0) {
-                    port = ports[0]; 
-                    document.getElementById('status').innerText = "🔄 Auto-connecting to known scanner...";
-                } else {
-                    port = await navigator.serial.requestPort();
-                }
-
-                await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ Scanner Connected! Listening...";
-                
-                const textDecoder = new TextDecoderStream();
-                port.readable.pipeTo(textDecoder.writable);
-                const reader = textDecoder.readable.getReader();
-                let incomingData = "";
-                
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    
-                    incomingData += value;
-                    
-                    // --- RELIABLE LINE PARSER ---
-                    // Splits stream segments into single clean chunks without wiping memory data structures
-                    if (incomingData.includes('\n')) {
-                        let lines = incomingData.split('\n');
-                        incomingData = lines.pop(); // Hold on to incomplete trailing bytes
-                        
-                        for (let line of lines) {
-                            if (line.trim()) {
-                                navigateDisplay(line); 
-                            }
-                        }
-                    }
-                }
-            } catch (err) {
-                document.getElementById('status').innerText = "❌ Connection failed. Is it plugged in?";
-            }
-        }
-
-        function startWebcam() {
-            const videoElement = document.getElementById('webcam');
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    videoElement.style.display = "block"; 
-                    videoElement.srcObject = stream;
-                })
-                .catch(function(err) {
-                    alert("Could not find a webcam!");
-                });
-        }
-    </script>
-</body>
-</html>
+                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun
