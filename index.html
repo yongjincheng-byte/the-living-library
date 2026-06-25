@@ -64,23 +64,28 @@
         }
 
         function navigateDisplay(scanResult) {
-            const input = scanResult.toLowerCase();
+            const input = scanResult.trim().toLowerCase();
+            if (input === "") return;
+            
+            // Debugging status: This helps you see if the hardware is talking
+            document.getElementById('status').innerText = "Heard: " + input;
+            
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             
             // Identify intent
-            let newLang = ["english", "chinese", "malay", "tamil"].find(l => input.includes(l));
-            let newHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].find(h => input.includes(h));
+            let detectedLang = ["english", "chinese", "malay", "tamil"].find(l => input.includes(l));
+            let detectedHerb = ["laksa", "pandan", "wolfberry", "celery", "lemongrass"].find(h => input.includes(h));
             let isHome = input.includes("home");
 
-            if (newLang) currentLang = newLang;
-            if (newHerb) currentHerb = newHerb;
+            // Update state
+            if (detectedLang) currentLang = detectedLang;
+            if (detectedHerb) currentHerb = detectedHerb;
             if (isHome) currentHerb = "home";
 
+            // Find and open
             let targetPage = paths[currentLang][currentHerb];
-
             if (targetPage) {
                 window.open(baseUrl + targetPage, "LibraryDisplayTab");
-                document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
             }
         }
 
@@ -88,19 +93,17 @@
             try {
                 const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ System Online: Scanner Ready";
+                document.getElementById('status').innerText = "✅ System Online";
                 
                 const reader = port.readable.getReader();
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
                     const text = new TextDecoder().decode(value);
-                    if (text.length > 0) {
-                        navigateDisplay(text);
-                    }
+                    navigateDisplay(text);
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Connection Error";
+                document.getElementById('status').innerText = "❌ Error: " + err.message;
             }
         }
     </script>
