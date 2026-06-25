@@ -5,22 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Living Library | Kiosk Controller</title>
     <style>
-        body { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            min-height: 100vh; background-color: #2E8B57; color: white; 
-            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; 
-        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; }
         h1 { font-size: 3rem; margin-bottom: 10px; }
-        .instructions { 
-            background: rgba(255,255,255,0.15); padding: 25px; border-radius: 20px; 
-            width: 80%; max-width: 600px; text-align: left; margin-bottom: 30px; 
-        }
+        .instructions { background: rgba(255,255,255,0.15); padding: 25px; border-radius: 20px; width: 80%; max-width: 600px; text-align: left; margin-bottom: 30px; }
         .btn-group { display: flex; gap: 20px; margin-top: 10px; }
-        button { 
-            padding: 15px 30px; font-size: 18px; background: white; color: #2E8B57; 
-            border: none; border-radius: 40px; cursor: pointer; font-weight: bold; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; 
-        }
+        button { padding: 15px 30px; font-size: 18px; background: white; color: #2E8B57; border: none; border-radius: 40px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; }
         button:hover { transform: scale(1.05); background: #f0f0f0; }
         #status { margin-top: 30px; font-size: 1.2rem; padding: 15px; border-radius: 10px; background: rgba(0,0,0,0.2); }
     </style>
@@ -33,15 +22,14 @@
         <h3>How to operate:</h3>
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
-            <li>Click "Connect to the Living Library".</li>
-            <li>Click "Launch the Living Library Website".</li>
-            <li>Follow the library website tabs.</li>
+            <li>Click "Connect Scanner" to initialize the hardware.</li>
+            <li>Press "Launch Kiosk" to open the display tab.</li>
         </ol>
     </div>
 
     <div class="btn-group">
-        <button onclick="startController()">Connect to the Living Library</button>
-        <button onclick="openDisplay()">Launch the Living Library Website</button>
+        <button onclick="startController()">Connect Scanner</button>
+        <button onclick="openDisplay()">Launch Kiosk</button>
     </div>
 
     <div id="status">Waiting for connection...</div>
@@ -59,25 +47,18 @@
 
         function openDisplay() {
             window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
-            currentHerb = "home";
-            currentLang = "english";
-            document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
-            const input = scanResult.trim().toLowerCase();
-            if (input === "") return;
+            const input = scanResult.toLowerCase();
             
-            document.getElementById('status').innerText = "Heard: " + input;
-            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
-            
-            // EXCLUSIVE CHECK: Detect Language
+            // Decoupled Language Detection
             if (input.includes("english")) currentLang = "english";
             else if (input.includes("chinese")) currentLang = "chinese";
             else if (input.includes("malay")) currentLang = "malay";
             else if (input.includes("tamil")) currentLang = "tamil";
             
-            // EXCLUSIVE CHECK: Detect Herb (Only triggers if one of these is found)
+            // Decoupled Herb Detection (Removed 'else' to prevent blocking)
             if (input.includes("laksa")) currentHerb = "laksa";
             else if (input.includes("pandan")) currentHerb = "pandan";
             else if (input.includes("wolfberry")) currentHerb = "wolfberry";
@@ -85,31 +66,33 @@
             else if (input.includes("lemongrass")) currentHerb = "lemongrass";
             else if (input.includes("home")) currentHerb = "home";
 
+            // Open the page using the lookup table
+            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = paths[currentLang][currentHerb];
-
-            if (targetPage) {
-                window.open(baseUrl + targetPage, "LibraryDisplayTab");
-                document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
-            }
+            
+            window.open(baseUrl + targetPage, "LibraryDisplayTab");
+            document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
         }
 
         async function startController() {
             try {
                 const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ System Online";
+                document.getElementById('status').innerText = "✅ System Online: Scanner Ready";
                 
                 const reader = port.readable.getReader();
+                let incomingData = "";
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
-                    const text = new TextDecoder().decode(value);
-                    if (text.trim().length > 0) {
-                        navigateDisplay(text);
+                    incomingData += new TextDecoder().decode(value);
+                    if (incomingData.includes('\n')) {
+                        navigateDisplay(incomingData); 
+                        incomingData = ""; 
                     }
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Error: " + err.message;
+                document.getElementById('status').innerText = "❌ Connection Error";
             }
         }
     </script>
