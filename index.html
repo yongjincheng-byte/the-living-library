@@ -10,7 +10,7 @@
         button:hover { transform: scale(1.05); }
         #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
         .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
-        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; }
+        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; } /* Hidden until activated */
     </style>
 </head>
 <body>
@@ -35,57 +35,51 @@
     <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open Presentation Tab</button>
 
     <script>
-        // --- 1. CORE STATE VARIABLES (Layered over your original layout) ---
+        // --- MEMORY TRACKERS (Remembers what page and language the user is currently looking at) ---
         let currentHerb = "home"; 
         let currentLang = "english"; 
-        let lastTargetPage = ""; 
 
+        // --- 1. DISPLAY MANAGEMENT ---
         function openDisplay() {
             window.open("https://sites.google.com/students.edu.sg/the-living-library/view-herbs", "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
-            lastTargetPage = "";
             document.getElementById('status').innerText = "Presentation tab opened!";
         }
 
         function navigateDisplay(scanResult) {
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            console.log("Hardware input received:", cleanScan);
+            console.log("Raw Input Received:", cleanScan);
 
-            let stateChanged = false;
-
-            // Step A: Parse Language buttons from the ADKeyboard (Keys A, B, C, E)
+            // STEP 1: Identify if the micro:bit sent a language change
             if (cleanScan.includes("english") || cleanScan === "a") {
-                if (currentLang !== "english") { currentLang = "english"; stateChanged = true; }
+                currentLang = "english";
             } else if (cleanScan.includes("chinese") || cleanScan === "b") {
-                if (currentLang !== "chinese") { currentLang = "chinese"; stateChanged = true; }
+                currentLang = "chinese";
             } else if (cleanScan.includes("malay") || cleanScan === "c") {
-                if (currentLang !== "malay") { currentLang = "malay"; stateChanged = true; }
+                currentLang = "malay";
             } else if (cleanScan.includes("tamil") || cleanScan === "e") {
-                if (currentLang !== "tamil") { currentLang = "tamil"; stateChanged = true; }
+                currentLang = "tamil";
             } 
             
-            // Step B: Parse Herb classification from the HuskyLens (Triggered via Key D)
+            // STEP 2: Identify if the micro:bit scanned a new herb
             else if (cleanScan.includes("laksa")) {
-                if (currentHerb !== "laksa") { currentHerb = "laksa"; stateChanged = true; }
+                currentHerb = "laksa";
             } else if (cleanScan.includes("pandan")) {
-                if (currentHerb !== "pandan") { currentHerb = "pandan"; stateChanged = true; }
+                currentHerb = "pandan";
             } else if (cleanScan.includes("wolfberry")) {
-                if (currentHerb !== "wolfberry") { currentHerb = "wolfberry"; stateChanged = true; }
+                currentHerb = "wolfberry";
             } else if (cleanScan.includes("celery")) {
-                if (currentHerb !== "celery") { currentHerb = "celery"; stateChanged = true; }
+                currentHerb = "celery";
             } else if (cleanScan.includes("lemongrass")) {
-                if (currentHerb !== "lemongrass") { currentHerb = "lemongrass"; stateChanged = true; }
+                currentHerb = "lemongrass";
             } else if (cleanScan.includes("home")) {
-                if (currentHerb !== "home") { currentHerb = "home"; stateChanged = true; }
+                currentHerb = "home";
             } else {
-                return; // Silently drop noise or partial words
+                return; // Ignore lines that don't match anything
             }
 
-            // Break execution if no new structural state change has occurred 
-            if (!stateChanged) return;
-
-            // Step C: Construct URLs cleanly using safe directory path rules
+            // STEP 3: Combine currentLang + currentHerb to build the exact target URL
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
@@ -98,7 +92,7 @@
                 else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
             } 
             else if (currentLang === "chinese") {
-                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; 
+                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; // Google Sites URL formatting for "中文"
                 else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
                 else if (currentHerb === "pandan") targetPage = "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6";
                 else if (currentHerb === "wolfberry") targetPage = "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6";
@@ -114,7 +108,7 @@
                 else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
             } 
             else if (currentLang === "tamil") {
-                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; 
+                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; // Google Sites URL formatting for "தமிழ்"
                 else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
                 else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
                 else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
@@ -122,30 +116,26 @@
                 else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
-            // Fallback safety gate 
-            if (targetPage === "" || targetPage === lastTargetPage) return;
-            lastTargetPage = targetPage;
-
-            // Open tab natively just like your old operational prototype
-            window.open(baseUrl + targetPage, "LibraryDisplayTab");
-            document.getElementById('status').innerText = `🌿 Active: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
+            // STEP 4: Fire the tab redirection instantly exactly like your original layout
+            if (targetPage !== "") {
+                window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
+            }
         }
 
-        // --- 2. SERIAL HARDWARE ROUTINES ---
+        // --- 2. REAL HARDWARE USB CONNECTION ---
         async function startController() {
-            if (isReading) return;
             try {
                 let port;
                 const ports = await navigator.serial.getPorts();
                 if (ports.length > 0) {
                     port = ports[0]; 
-                    document.getElementById('status').innerText = "🔄 Re-connecting to scanner...";
+                    document.getElementById('status').innerText = "🔄 Auto-connecting to known scanner...";
                 } else {
                     port = await navigator.serial.requestPort();
                 }
 
                 await port.open({ baudRate: 115200 });
-                isReading = true;
                 document.getElementById('status').innerText = "✅ Scanner Connected! Listening...";
                 
                 const textDecoder = new TextDecoderStream();
@@ -159,22 +149,18 @@
                     if (done) break;
                     
                     incomingData += value;
-                    let lines = incomingData.split("\n");
-                    incomingData = lines.pop(); 
-                    
-                    for (let line of lines) {
-                        if (line.trim()) {
-                            navigateDisplay(line); 
-                        }
+                    if (incomingData.includes('\n')) {
+                        let scanResult = incomingData.trim().toLowerCase();
+                        navigateDisplay(scanResult); 
+                        incomingData = ""; 
                     }
                 }
             } catch (err) {
-                isReading = false;
-                document.getElementById('status').innerText = "❌ Connection failed. Check USB cable connection.";
+                document.getElementById('status').innerText = "❌ Connection failed. Is it plugged in?";
             }
         }
 
-        // --- 3. LIVE CAMERA BOX ILLUSION ---
+        // --- 3. THE MAGIC WEBCAM ILLUSION ---
         function startWebcam() {
             const videoElement = document.getElementById('webcam');
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -183,7 +169,7 @@
                     videoElement.srcObject = stream;
                 })
                 .catch(function(err) {
-                    alert("Could not initialize webcam window.");
+                    alert("Could not find a webcam! Make sure you gave the browser permission when asked.");
                 });
         }
     </script>
