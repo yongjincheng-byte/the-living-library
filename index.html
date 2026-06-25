@@ -29,9 +29,11 @@
     <script>
         let currentHerb = "home"; 
         let currentLang = "english"; 
+        let currentActiveUrl = ""; // STATE LOCK MEMORY
 
         function openDisplay() {
-            window.open("https://sites.google.com/students.edu.sg/the-living-library/home", "LibraryDisplayTab");
+            currentActiveUrl = "https://sites.google.com/students.edu.sg/the-living-library/home";
+            window.open(currentActiveUrl, "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
             document.getElementById('status').innerText = "Presentation tab opened!";
@@ -41,9 +43,7 @@
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
             if (!cleanScan) return;
 
-            console.log("👉 Matcher analyzing string:", cleanScan);
-
-            // 1. CHECK HERBS FIRST (Prevents "chinesecelery" from triggering language change)
+            // 1. CHECK HERBS FIRST (Prevents "chinesecelery" hijack)
             if (cleanScan.includes("lak") || cleanScan.includes("ksa")) {
                 currentHerb = "laksa";
             } else if (cleanScan.includes("pan") || cleanScan.includes("dan")) {
@@ -57,7 +57,7 @@
             } else if (cleanScan.includes("hom") || cleanScan.includes("ome")) {
                 currentHerb = "home";
             } 
-            // 2. CHECK LANGUAGES SECOND (Checking both start AND end of words for hardware cut-offs)
+            // 2. CHECK LANGUAGES SECOND
             else if (cleanScan.includes("eng") || cleanScan.includes("glish") || cleanScan === "a") {
                 currentLang = "english";
             } else if (cleanScan.includes("chi") || cleanScan.includes("nese") || cleanScan === "b") {
@@ -66,10 +66,8 @@
                 currentLang = "malay";
             } else if (cleanScan.includes("tam") || cleanScan.includes("mil") || cleanScan === "e") {
                 currentLang = "tamil";
-            } 
-            else {
-                console.log("⚠️ String recognized as unmapped noise:", cleanScan);
-                return; 
+            } else {
+                return; // Ignore noise
             }
 
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
@@ -109,9 +107,17 @@
             }
 
             if (targetPage !== "") {
-                console.log("🚀 Redirection URL construction complete:", baseUrl + targetPage);
-                window.open(baseUrl + targetPage, "LibraryDisplayTab");
-                document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
+                let fullNewUrl = baseUrl + targetPage;
+                
+                // THE STATE LOCK: Only open the tab if it's a completely NEW page
+                if (fullNewUrl !== currentActiveUrl) {
+                    console.log("🚀 Switching to:", fullNewUrl);
+                    window.open(fullNewUrl, "LibraryDisplayTab");
+                    currentActiveUrl = fullNewUrl; // Update memory
+                    document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
+                } else {
+                    console.log("🛡️ Blocked duplicate hardware spam for:", currentHerb);
+                }
             }
         }
 
@@ -119,11 +125,8 @@
             try {
                 let port;
                 const ports = await navigator.serial.getPorts();
-                if (ports.length > 0) {
-                    port = ports[0]; 
-                } else {
-                    port = await navigator.serial.requestPort();
-                }
+                if (ports.length > 0) port = ports[0]; 
+                else port = await navigator.serial.requestPort();
 
                 await port.open({ baudRate: 115200 });
                 document.getElementById('status').innerText = "✅ Link Active! Listening to Port...";
@@ -138,16 +141,13 @@
                     if (done) break;
                     
                     incomingData += value;
-                    console.log("📥 Raw Data Fragment entering buffer:", value);
                     
                     if (incomingData.includes('\n')) {
                         let lines = incomingData.split('\n');
                         incomingData = lines.pop(); 
                         
                         for (let line of lines) {
-                            if (line.trim()) {
-                                navigateDisplay(line); 
-                            }
+                            if (line.trim()) navigateDisplay(line); 
                         }
                     }
                 }
