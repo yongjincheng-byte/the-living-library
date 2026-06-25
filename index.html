@@ -1,96 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner Controller</title>
-    <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px;}
-        button { padding: 15px 40px; margin: 10px; font-size: 20px; background: white; color: #2E8B57; border: none; border-radius: 40px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s; }
-        button:hover { transform: scale(1.05); }
-        #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
-        .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
-        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; }
-    </style>
-</head>
-<body>
+// Global states to remember what the user is looking at
+let currentHerb = "home"; 
+let currentLang = "english"; 
 
-    <h1>🌿 The Living Library Scanner</h1>
-    <p>Keep this tab open in the background to listen to the hardware.</p>
+function navigateDisplay(scanResult) {
+    // Convert to lowercase just in case the Micro:bit sends different casing
+    const scanLower = scanResult.toLowerCase();
 
-    <div class="box">
-        <h3>1. REAL HARDWARE</h3>
-        <button onclick="startController()">Connect Physical Scanner (USB)</button>
-        <div id="status">Waiting for connection...</div>
-    </div>
+    // 1. CHECK IF INPUT IS A LANGUAGE BUTTON OR AN HERB SCAN
+    if (scanLower.includes("english")) {
+        currentLang = "english";
+    } else if (scanLower.includes("chinese")) {
+        currentLang = "chinese";
+    } else if (scanLower.includes("malay")) {
+        currentLang = "malay";
+    } else if (scanLower.includes("tamil")) {
+        currentLang = "tamil";
+    } 
+    // If it's not a language command, it's a new herb scan (or home)
+    else if (scanLower.includes("laksa")) {
+        currentHerb = "laksa";
+    } else if (scanLower.includes("pandan")) {
+        currentHerb = "pandan";
+    } else if (scanLower.includes("wolfberry")) {
+        currentHerb = "wolfberry";
+    } else if (scanLower.includes("celery")) {
+        currentHerb = "celery";
+    } else if (scanLower.includes("lemongrass")) {
+        currentHerb = "lemongrass";
+    } else if (scanLower.includes("home")) {
+        currentHerb = "home";
+    }
 
-    <div class="box">
-        <h3>2. LIVE CAMERA ILLUSION</h3>
-        <button onclick="startWebcam()" style="font-size: 16px; padding: 10px 20px;">Turn on Laptop Camera</button>
-        <br>
-        <video id="webcam" autoplay playsinline></video>
-    </div>
+    // 2. BUILD THE TARGET URL BASED ON BOTH CURRENT HERB & CURRENT LANGUAGE
+    const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
+    let targetPage = "";
+
+    // ROUTING TABLE 
+    if (currentLang === "english") {
+        if (currentHerb === "home") targetPage = "english";
+        else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
+        else if (currentHerb === "pandan") targetPage = "english/pandan-leaf";
+        else if (currentHerb === "wolfberry") targetPage = "english/wolfberry-leaf";
+        else if (currentHerb === "celery") targetPage = "english/chinese-celery";
+        else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
+    } 
+    else if (currentLang === "chinese") {
+        if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; 
+        else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
+        else if (currentHerb === "pandan") targetPage = "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6";
+        else if (currentHerb === "wolfberry") targetPage = "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6";
+        else if (currentHerb === "celery") targetPage = "%E4%B8%AD%E6%96%87/%E8%8A%B9%E8%8F%9C";
+        else if (currentHerb === "lemongrass") targetPage = "%E4%B8%AD%E6%96%87/%E9%A6%99%E8%8C%85";
+    } 
+    else if (currentLang === "malay") {
+        if (currentHerb === "home") targetPage = "bahasa-melayu"; 
+        else if (currentHerb === "laksa") targetPage = "bahasa-melayu/daun-laksa";
+        else if (currentHerb === "pandan") targetPage = "bahasa-melayu/daun-pandan";
+        else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun-goji";
+        else if (currentHerb === "celery") targetPage = "bahasa-melayu/saderi-cina";
+        else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
+    } 
+    else if (currentLang === "tamil") {
+        if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; 
+        else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
+        else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
+        else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
+        else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery";
+        else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
+    }
+
+    // 3. EXECUTE REDIRECT IN THE SAME PRESENTATION TAB
+    window.open(baseUrl + targetPage, "Library Display Tab");
     
-    <br>
-    <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open Presentation Tab</button>
-
-    <script>
-        function openDisplay() {
-            window.open("https://sites.google.com/students.edu.sg/the-living-library/english", "LibraryDisplayTab");
-        }
-
-        function navigateDisplay(scanResult) {
-            // Updated to match your folder structure: /english/
-            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/english/";
-            let targetPage = "";
-            const cleanScan = scanResult.trim().toLowerCase();
-
-            if (cleanScan.includes("laksa")) targetPage = "laksa-leaf";
-            else if (cleanScan.includes("pandan")) targetPage = "pandan-leaf";
-            else if (cleanScan.includes("wolfberry")) targetPage = "wolfberry-leaf";
-            else if (cleanScan.includes("celery")) targetPage = "chinese-celery";
-            else if (cleanScan.includes("lemongrass")) targetPage = "lemongrass";
-
-            if (targetPage !== "") {
-                const fullUrl = baseUrl + targetPage;
-                console.log("Navigating to: " + fullUrl);
-                window.open(fullUrl, "LibraryDisplayTab");
-                document.getElementById('status').innerText = "Last scanned: " + targetPage;
-            }
-        }
-
-        async function startController() {
-            try {
-                const port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ Connected!";
-                
-                const reader = port.readable.getReader();
-                let incomingData = "";
-                
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    
-                    incomingData += new TextDecoder().decode(value);
-                    if (incomingData.includes('\n')) {
-                        navigateDisplay(incomingData); 
-                        incomingData = ""; 
-                    }
-                }
-            } catch (err) {
-                document.getElementById('status').innerText = "❌ Error: " + err.message;
-            }
-        }
-
-        function startWebcam() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    const v = document.getElementById('webcam');
-                    v.style.display = "block";
-                    v.srcObject = stream;
-                });
-        }
-    </script>
-</body>
-</html>
+    // Optional: Updates a status element on your scanner page if you have one
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+        statusEl.innerText = `Current Page: ${currentHerb} (${currentLang})`;
+    }
+}
