@@ -33,15 +33,14 @@
         <h3>How to operate:</h3>
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
-            <li>Click "Connect to the Living Library".</li>
-            <li>Click "Launch the Living Library Website".</li>
-            <li>Scan your plant cards to identify them.</li>
+            <li>Click "Connect Scanner" to initialize.</li>
+            <li>Click "Launch Kiosk" to open the display tab.</li>
         </ol>
     </div>
 
     <div class="btn-group">
-        <button onclick="startController()">Connect to the Living Library</button>
-        <button onclick="openDisplay()">Launch the Living Library Website</button>
+        <button onclick="startController()">Connect Scanner</button>
+        <button onclick="openDisplay()">Launch Kiosk</button>
     </div>
 
     <div id="status">Waiting for connection...</div>
@@ -60,7 +59,6 @@
             
             let targetPage = "";
 
-            // Direct Mapping
             if (input.includes("laksa")) targetPage = "english/laksa-leaf";
             else if (input.includes("pandan")) targetPage = "english/pandan-leaf";
             else if (input.includes("wolfberry")) targetPage = "english/wolfberry-leaf";
@@ -77,7 +75,7 @@
             try {
                 const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ System Online";
+                document.getElementById('status').innerText = "✅ System Online: Scanner Ready";
                 
                 const reader = port.readable.getReader();
                 let incomingData = "";
@@ -91,7 +89,7 @@
                     }
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Error: " + err.message;
+                document.getElementById('status').innerText = "❌ Connection Error";
             }
         }
     </script>
