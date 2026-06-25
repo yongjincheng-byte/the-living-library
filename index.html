@@ -34,7 +34,7 @@
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
             <li>Click "Connect Scanner" to initialize the hardware.</li>
-            <li>Press "Launch Kiosk" to open the display tab.</li>
+            <li>Click "Launch Kiosk" to open the display tab.</li>
             <li>Follow the instructions provided in the library website tabs.</li>
         </ol>
     </div>
@@ -51,13 +51,15 @@
         let currentLang = "english"; 
 
         function openDisplay() {
-            navigateDisplay("home");
+            window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
+            currentHerb = "home";
             document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
             const scanLower = scanResult.toLowerCase();
 
+            // 1. State Updates
             if (scanLower.includes("english")) currentLang = "english";
             else if (scanLower.includes("chinese")) currentLang = "chinese";
             else if (scanLower.includes("malay")) currentLang = "malay";
@@ -72,6 +74,7 @@
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
+            // 2. Logic Table for all languages
             if (currentLang === "english") {
                 if (currentHerb === "home") targetPage = "english";
                 else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
@@ -80,10 +83,36 @@
                 else if (currentHerb === "celery") targetPage = "english/chinese-celery";
                 else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
             } 
-            // Add other languages here...
+            else if (currentLang === "chinese") {
+                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87";
+                else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
+                else if (currentHerb === "pandan") targetPage = "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6";
+                else if (currentHerb === "wolfberry") targetPage = "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6";
+                else if (currentHerb === "celery") targetPage = "%E4%B8%AD%E6%96%87/%E8%8A%B9%E8%8F%9C";
+                else if (currentHerb === "lemongrass") targetPage = "%E4%B8%AD%E6%96%87/%E9%A6%99%E8%8C%85";
+            } 
+            else if (currentLang === "malay") {
+                if (currentHerb === "home") targetPage = "bahasa-melayu";
+                else if (currentHerb === "laksa") targetPage = "bahasa-melayu/daun-laksa";
+                else if (currentHerb === "pandan") targetPage = "bahasa-melayu/daun-pandan";
+                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun-goji";
+                else if (currentHerb === "celery") targetPage = "bahasa-melayu/saderi-cina";
+                else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
+            } 
+            else if (currentLang === "tamil") {
+                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4";
+                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/laksa-leaf";
+                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/pandan-leaf";
+                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/wolfberry";
+                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/chinese-celery";
+                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/lemongrass";
+            }
 
-            window.open(baseUrl + targetPage, "LibraryDisplayTab");
-            document.getElementById('status').innerText = `Active: ${currentHerb} in ${currentLang}`;
+            // 3. Execution
+            if (targetPage !== "") {
+                window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
+            }
         }
 
         async function startController() {
