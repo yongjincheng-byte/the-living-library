@@ -34,7 +34,7 @@
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
             <li>Click "Connect to the Living Library" to initialize the hardware.</li>
-            <li>Click "Launch the Living Library" to open the display tab.</li>
+            <li>Click "Launch the Living Library Website" to open the display tab.</li>
             <li>Follow the instructions provided in the library website tabs.</li>
         </ol>
     </div>
@@ -59,7 +59,7 @@
         function navigateDisplay(scanResult) {
             const scanLower = scanResult.toLowerCase();
 
-            // 1. State Updates
+            // 1. Update states
             if (scanLower.includes("english")) currentLang = "english";
             else if (scanLower.includes("chinese")) currentLang = "chinese";
             else if (scanLower.includes("malay")) currentLang = "malay";
@@ -74,7 +74,7 @@
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
-            // 2. Logic Table for all languages
+            // 2. Logic: Context-aware mapping
             if (currentLang === "english") {
                 if (currentHerb === "home") targetPage = "english";
                 else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
@@ -100,6 +100,7 @@
                 else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
             } 
             else if (currentLang === "tamil") {
+                // UPDATE THESE PATHS TO MATCH YOUR LIVE GOOGLE SITE URLS
                 if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4";
                 else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/laksa-leaf";
                 else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/pandan-leaf";
