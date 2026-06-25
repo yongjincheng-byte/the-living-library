@@ -33,14 +33,14 @@
         <h3>How to operate:</h3>
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
-            <li>Click "Connect to The Living Library" to initialize the hardware.</li>
-            <li>Press "Launch the Living Library Website" to open the display tab.</li>
-            <li>Follow the instructions provided in the library website tabs.</li>
+            <li>Click "Connect to the Living Library" to initialize the hardware.</li>
+            <li>Click "Launch the Living Library Website" to open the display tab.</li>
+            <li>Follow the instructions provided in the website.</li>
         </ol>
     </div>
 
     <div class="btn-group">
-        <button onclick="startController()">Connect to The Living Library</button>
+        <button onclick="startController()">Connect to the Living Library</button>
         <button onclick="openDisplay()">Launch the Living Library Website</button>
     </div>
 
@@ -51,8 +51,11 @@
         let currentLang = "english"; 
 
         function openDisplay() {
-            navigateDisplay("home");
-            document.getElementById('status').innerText = "Presentation tab launched!";
+            // Force the landing page to be the main home page
+            const homeUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
+            window.open(homeUrl, "LibraryDisplayTab");
+            currentHerb = "home";
+            document.getElementById('status').innerText = "Presentation tab launched at Home!";
         }
 
         function navigateDisplay(scanResult) {
@@ -72,15 +75,15 @@
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
-            if (currentLang === "english") {
-                if (currentHerb === "home") targetPage = "english";
-                else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
+            if (currentHerb === "home") targetPage = "";
+            else if (currentLang === "english") {
+                if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
                 else if (currentHerb === "pandan") targetPage = "english/pandan-leaf";
                 else if (currentHerb === "wolfberry") targetPage = "english/wolfberry-leaf";
                 else if (currentHerb === "celery") targetPage = "english/chinese-celery";
                 else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
-            } 
-            // Add other languages here...
+            }
+            // You can add logic for other languages here by adding else if blocks
 
             window.open(baseUrl + targetPage, "LibraryDisplayTab");
             document.getElementById('status').innerText = `Active: ${currentHerb} in ${currentLang}`;
@@ -104,7 +107,7 @@
                     }
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "❌ Connection Error";
+                document.getElementById('status').innerText = "❌ Connection Error: Is it plugged in?";
             }
         }
     </script>
