@@ -3,102 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Living Library Controller</title>
+    <title>Scanner Controller</title>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; transition: background-color 0.1s ease; }
-        .button-row { display: flex; flex-direction: row; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        button { padding: 15px 40px; font-size: 20px; background: white; color: #2E8B57; border: none; border-radius: 40px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #2E8B57; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px;}
+        button { padding: 15px 40px; margin: 10px; font-size: 20px; background: white; color: #2E8B57; border: none; border-radius: 40px; cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s; }
         button:hover { transform: scale(1.05); }
-        #status { margin-top: 15px; font-size: 1.8rem; font-weight: bold; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 10px; min-width: 300px; }
-        details { background: rgba(255, 255, 255, 0.1); border: 2px solid white; border-radius: 15px; padding: 15px; width: 90%; max-width: 550px; margin-top: 15px; box-sizing: border-box; }
-        summary { font-size: 22px; font-weight: bold; cursor: pointer; user-select: none; }
-        ol { text-align: left; display: inline-block; margin: 15px 0 0 0; padding-left: 25px; font-size: 18px; line-height: 1.6; }
-        .flash-active { background-color: #1e5d3a !important; }
+        #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
+        .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
+        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
 
     <h1>🌿 The Living Library</h1>
-    <p>Keep this tab open while using the Living Library</p>
+    <p>Keep this tab open in the background to listen to the hardware.</p>
 
-    <details>
-        <summary>Instructions</summary>
-        <ol>
-            <li>Plug the USB cable into the device</li>
-            <li>Click on the button "Connect to the Living Library"</li>
-            <li>Click on the button "Open the Living Library Website"</li>
-        </ol>
-    </details>
-    
-    <div class="button-row">
-        <button onclick="startController()">Connect to the Living Library</button>
-        <button onclick="openDisplay()">Open the Living Library Website</button>
+    <div class="box">
+        <h3>1. REAL HARDWARE</h3>
+        <button onclick="startController()">Connect Physical Scanner (USB)</button>
+        <div id="status">Waiting for connection...</div>
     </div>
 
-    <div id="status">Waiting for connection...</div>
+    <div class="box">
+        <h3>2. LIVE CAMERA ILLUSION (Optional)</h3>
+        <button onclick="startWebcam()" style="font-size: 16px; padding: 10px 20px;">Turn on Laptop Camera</button>
+        <br>
+        <video id="webcam" autoplay playsinline></video>
+    </div>
+    
+    <br>
+    <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open Presentation Tab</button>
 
     <script>
+        // --- 1. CORE STATE VARIABLES (Layered over your original layout) ---
         let currentHerb = "home"; 
         let currentLang = "english"; 
-        let isReading = false; 
         let lastTargetPage = ""; 
-        let debounceTimer = null; // STABILIZER: Locks out hardware voltage drops
-        
-        function playBeep() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.1);
-            } catch (e) {}
-        }
-
-        function triggerVisualFlash() {
-            document.body.classList.add('flash-active');
-            setTimeout(() => { document.body.classList.remove('flash-active'); }, 100);
-        }
 
         function openDisplay() {
-            window.open("https://sites.google.com/students.edu.sg/the-living-library/home", "LibraryDisplayTab");
+            window.open("https://sites.google.com/students.edu.sg/the-living-library/view-herbs", "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
-            lastTargetPage = "english"; 
+            lastTargetPage = "";
             document.getElementById('status').innerText = "Presentation tab opened!";
         }
 
         function navigateDisplay(scanResult) {
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
+            console.log("Hardware input received:", cleanScan);
 
-            // Load incoming streams into active tracking registers
-            if (cleanScan.includes("english") || cleanScan === "a") currentLang = "english";
-            else if (cleanScan.includes("chinese") || cleanScan === "b") currentLang = "chinese";
-            else if (cleanScan.includes("malay") || cleanScan === "c") currentLang = "malay";
-            else if (cleanScan.includes("tamil") || cleanScan === "e") currentLang = "tamil";
+            let stateChanged = false;
+
+            // Step A: Parse Language buttons from the ADKeyboard (Keys A, B, C, E)
+            if (cleanScan.includes("english") || cleanScan === "a") {
+                if (currentLang !== "english") { currentLang = "english"; stateChanged = true; }
+            } else if (cleanScan.includes("chinese") || cleanScan === "b") {
+                if (currentLang !== "chinese") { currentLang = "chinese"; stateChanged = true; }
+            } else if (cleanScan.includes("malay") || cleanScan === "c") {
+                if (currentLang !== "malay") { currentLang = "malay"; stateChanged = true; }
+            } else if (cleanScan.includes("tamil") || cleanScan === "e") {
+                if (currentLang !== "tamil") { currentLang = "tamil"; stateChanged = true; }
+            } 
             
-            if (cleanScan.includes("laksa")) currentHerb = "laksa";
-            else if (cleanScan.includes("pandan")) currentHerb = "pandan";
-            else if (cleanScan.includes("wolfberry")) currentHerb = "wolfberry";
-            else if (cleanScan.includes("celery")) currentHerb = "celery";
-            else if (cleanScan.includes("lemongrass")) currentHerb = "lemongrass";
-            else if (cleanScan.includes("home")) currentHerb = "home";
+            // Step B: Parse Herb classification from the HuskyLens (Triggered via Key D)
+            else if (cleanScan.includes("laksa")) {
+                if (currentHerb !== "laksa") { currentHerb = "laksa"; stateChanged = true; }
+            } else if (cleanScan.includes("pandan")) {
+                if (currentHerb !== "pandan") { currentHerb = "pandan"; stateChanged = true; }
+            } else if (cleanScan.includes("wolfberry")) {
+                if (currentHerb !== "wolfberry") { currentHerb = "wolfberry"; stateChanged = true; }
+            } else if (cleanScan.includes("celery")) {
+                if (currentHerb !== "celery") { currentHerb = "celery"; stateChanged = true; }
+            } else if (cleanScan.includes("lemongrass")) {
+                if (currentHerb !== "lemongrass") { currentHerb = "lemongrass"; stateChanged = true; }
+            } else if (cleanScan.includes("home")) {
+                if (currentHerb !== "home") { currentHerb = "home"; stateChanged = true; }
+            } else {
+                return; // Silently drop noise or partial words
+            }
 
-            // --- THE STABILIZER ---
-            // If the hardware sags and triggers multiple random language reads in a flash,
-            // this drops them and delays execution until the inputs completely stand still.
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                executeFinalNavigation();
-            }, 500); // 500ms safety window
-        }
+            // Break execution if no new structural state change has occurred 
+            if (!stateChanged) return;
 
-        function executeFinalNavigation() {
+            // Step C: Construct URLs cleanly using safe directory path rules
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
@@ -135,37 +122,36 @@
                 else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
-            if (targetPage === lastTargetPage) return; 
+            // Fallback safety gate 
+            if (targetPage === "" || targetPage === lastTargetPage) return;
+            lastTargetPage = targetPage;
 
-            lastTargetPage = targetPage; 
-            console.log(`🎯 Voltage Stabilized. Opening real tab: ${targetPage}`);
-            
-            playBeep();
-            triggerVisualFlash();
-
-            const statusEl = document.getElementById('status');
-            if (statusEl) {
-                statusEl.innerText = `🌿 Live: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
-            }
-
+            // Open tab natively just like your old operational prototype
             window.open(baseUrl + targetPage, "LibraryDisplayTab");
+            document.getElementById('status').innerText = `🌿 Active: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
         }
 
+        // --- 2. SERIAL HARDWARE ROUTINES ---
         async function startController() {
             if (isReading) return;
             try {
                 let port;
                 const ports = await navigator.serial.getPorts();
-                if (ports.length > 0) port = ports[0]; 
-                else port = await navigator.serial.requestPort();
-                
-                isReading = true;
+                if (ports.length > 0) {
+                    port = ports[0]; 
+                    document.getElementById('status').innerText = "🔄 Re-connecting to scanner...";
+                } else {
+                    port = await navigator.serial.requestPort();
+                }
+
                 await port.open({ baudRate: 115200 });
-                document.getElementById('status').innerText = "✅ Connected! Listening...";
+                isReading = true;
+                document.getElementById('status').innerText = "✅ Scanner Connected! Listening...";
                 
                 const textDecoder = new TextDecoderStream();
                 port.readable.pipeTo(textDecoder.writable);
                 const reader = textDecoder.readable.getReader();
+                
                 let incomingData = "";
                 
                 while (true) {
@@ -184,8 +170,21 @@
                 }
             } catch (err) {
                 isReading = false;
-                document.getElementById('status').innerText = "❌ Connection failed. Replug USB.";
+                document.getElementById('status').innerText = "❌ Connection failed. Check USB cable connection.";
             }
+        }
+
+        // --- 3. LIVE CAMERA BOX ILLUSION ---
+        function startWebcam() {
+            const videoElement = document.getElementById('webcam');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoElement.style.display = "block"; 
+                    videoElement.srcObject = stream;
+                })
+                .catch(function(err) {
+                    alert("Could not initialize webcam window.");
+                });
         }
     </script>
 </body>
