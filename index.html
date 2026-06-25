@@ -29,21 +29,30 @@
     <script>
         let currentHerb = "home"; 
         let currentLang = "english"; 
-        let currentActiveUrl = ""; // STATE LOCK MEMORY
+        
+        // ⏳ TIMELOCK VARIABLES
+        let lastActionTime = 0; 
+        const COOLDOWN_MS = 1500; // 1.5 seconds of absolute silence after any action
 
         function openDisplay() {
-            currentActiveUrl = "https://sites.google.com/students.edu.sg/the-living-library/home";
-            window.open(currentActiveUrl, "LibraryDisplayTab");
+            window.open("https://sites.google.com/students.edu.sg/the-living-library/home", "LibraryDisplayTab");
             currentHerb = "home";
             currentLang = "english";
             document.getElementById('status').innerText = "Presentation tab opened!";
         }
 
         function navigateDisplay(scanResult) {
+            // ⏳ Check the Time-Lock Shield first!
+            let now = Date.now();
+            if (now - lastActionTime < COOLDOWN_MS) {
+                console.log("🛡️ Cooldown active. Ignoring hardware bounce.");
+                return; 
+            }
+
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
             if (!cleanScan) return;
 
-            // 1. CHECK HERBS FIRST (Prevents "chinesecelery" hijack)
+            // 1. CHECK HERBS FIRST 
             if (cleanScan.includes("lak") || cleanScan.includes("ksa")) {
                 currentHerb = "laksa";
             } else if (cleanScan.includes("pan") || cleanScan.includes("dan")) {
@@ -81,6 +90,7 @@
                 else if (currentHerb === "celery") targetPage = "english/chinese-celery";
                 else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
             } 
+            // ... (All other language route logic remains exactly the same as the last version)
             else if (currentLang === "chinese") {
                 if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; 
                 else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
@@ -108,16 +118,12 @@
 
             if (targetPage !== "") {
                 let fullNewUrl = baseUrl + targetPage;
+                console.log("🚀 Switching to:", fullNewUrl);
+                window.open(fullNewUrl, "LibraryDisplayTab");
+                document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
                 
-                // THE STATE LOCK: Only open the tab if it's a completely NEW page
-                if (fullNewUrl !== currentActiveUrl) {
-                    console.log("🚀 Switching to:", fullNewUrl);
-                    window.open(fullNewUrl, "LibraryDisplayTab");
-                    currentActiveUrl = fullNewUrl; // Update memory
-                    document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
-                } else {
-                    console.log("🛡️ Blocked duplicate hardware spam for:", currentHerb);
-                }
+                // ⏳ Lock the shield! The code will ignore hardware for the next 1500ms
+                lastActionTime = Date.now(); 
             }
         }
 
