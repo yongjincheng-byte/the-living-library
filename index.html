@@ -47,9 +47,11 @@
 
         function navigateDisplay(scanResult) {
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            console.log("Processing checked link routing:", cleanScan);
+            if (!cleanScan) return; // Drop completely empty strings
 
-            // Catch short/cut-off language markers cleanly
+            console.log("Executing Routing Logic For:", cleanScan);
+
+            // Catch language identifiers (including hardware drops)
             if (cleanScan.includes("engl") || cleanScan === "a") {
                 currentLang = "english";
             } else if (cleanScan.includes("chin") || cleanScan === "b") {
@@ -60,7 +62,7 @@
                 currentLang = "tamil";
             } 
             
-            // Catch short/cut-off herb names safely
+            // Catch herb identifiers (including hardware drops)
             else if (cleanScan.includes("laks")) {
                 currentHerb = "laksa";
             } else if (cleanScan.includes("pand")) {
@@ -74,13 +76,12 @@
             } else if (cleanScan.includes("home")) {
                 currentHerb = "home";
             } else {
-                return; 
+                return; // Drop lines that don't match any system targets
             }
 
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
-            // --- AUDITED ROUTING TABLES ---
             if (currentLang === "english") {
                 if (currentHerb === "home") targetPage = "english";
                 else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
@@ -144,10 +145,18 @@
                     if (done) break;
                     
                     incomingData += value;
+                    
+                    // --- RELIABLE LINE PARSER ---
+                    // Splits stream segments into single clean chunks without wiping memory data structures
                     if (incomingData.includes('\n')) {
-                        let scanResult = incomingData.trim().toLowerCase();
-                        navigateDisplay(scanResult); 
-                        incomingData = ""; 
+                        let lines = incomingData.split('\n');
+                        incomingData = lines.pop(); // Hold on to incomplete trailing bytes
+                        
+                        for (let line of lines) {
+                            if (line.trim()) {
+                                navigateDisplay(line); 
+                            }
+                        }
                     }
                 }
             } catch (err) {
