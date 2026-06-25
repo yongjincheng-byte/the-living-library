@@ -38,13 +38,11 @@
         }
 
         function navigateDisplay(scanResult) {
-            // Force clean lowercase conversion to fix casing mismatches
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
             if (!cleanScan) return;
 
             console.log("👉 Matcher analyzing string:", cleanScan);
 
-            // Match language string fragments safely
             if (cleanScan.includes("eng") || cleanScan === "a") {
                 currentLang = "english";
             } else if (cleanScan.includes("chi") || cleanScan === "b") {
@@ -54,7 +52,6 @@
             } else if (cleanScan.includes("tam") || cleanScan === "e") {
                 currentLang = "tamil";
             } 
-            // Match herb string fragments safely
             else if (cleanScan.includes("lak")) {
                 currentHerb = "laksa";
             } else if (cleanScan.includes("pan")) {
@@ -95,4 +92,66 @@
                 if (currentHerb === "home") targetPage = "bahasa-melayu"; 
                 else if (currentHerb === "laksa") targetPage = "bahasa-melayu/daun-laksa";
                 else if (currentHerb === "pandan") targetPage = "bahasa-melayu/daun-pandan";
-                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun
+                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun-goji";
+                else if (currentHerb === "celery") targetPage = "bahasa-melayu/saderi-cina";
+                else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
+            } 
+            else if (currentLang === "tamil") {
+                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; 
+                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
+                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
+                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
+                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery";
+                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
+            }
+
+            if (targetPage !== "") {
+                console.log("🚀 Redirection URL construction complete:", baseUrl + targetPage);
+                window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
+            }
+        }
+
+        async function startController() {
+            try {
+                let port;
+                const ports = await navigator.serial.getPorts();
+                if (ports.length > 0) {
+                    port = ports[0]; 
+                } else {
+                    port = await navigator.serial.requestPort();
+                }
+
+                await port.open({ baudRate: 115200 });
+                document.getElementById('status').innerText = "✅ Link Active! Listening to Port...";
+                
+                const textDecoder = new TextDecoderStream();
+                port.readable.pipeTo(textDecoder.writable);
+                const reader = textDecoder.readable.getReader();
+                let incomingData = "";
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    incomingData += value;
+                    console.log("📥 Raw Data Fragment entering buffer:", value);
+                    
+                    if (incomingData.includes('\n')) {
+                        let lines = incomingData.split('\n');
+                        incomingData = lines.pop(); 
+                        
+                        for (let line of lines) {
+                            if (line.trim()) {
+                                navigateDisplay(line); 
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                document.getElementById('status').innerText = "❌ Connection failed. Check hardware port connection.";
+            }
+        }
+    </script>
+</body>
+</html>
