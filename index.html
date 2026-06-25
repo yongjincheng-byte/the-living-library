@@ -53,13 +53,14 @@
         function openDisplay() {
             window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
             currentHerb = "home";
+            currentLang = "english";
             document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
             const scanLower = scanResult.toLowerCase();
 
-            // Detect Language or Herb
+            // 1. Update State
             if (scanLower.includes("english")) currentLang = "english";
             else if (scanLower.includes("chinese")) currentLang = "chinese";
             else if (scanLower.includes("malay")) currentLang = "malay";
@@ -72,43 +73,48 @@
             else if (scanLower.includes("home")) currentHerb = "home";
 
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
-            let targetPage = "";
+            
+            // 2. The Lookup Table: Maps [language][herb] to the specific path
+            const paths = {
+                english: {
+                    home: "english",
+                    laksa: "english/laksa-leaf",
+                    pandan: "english/pandan-leaf",
+                    wolfberry: "english/wolfberry-leaf",
+                    celery: "english/chinese-celery",
+                    lemongrass: "english/lemongrass"
+                },
+                chinese: {
+                    home: "%E4%B8%AD%E6%96%87",
+                    laksa: "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6",
+                    pandan: "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6",
+                    wolfberry: "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6",
+                    celery: "%E4%B8%AD%E6%96%87/%E8%8A%B9%E8%8F%9C",
+                    lemongrass: "%E4%B8%AD%E6%96%87/%E9%A6%99%E8%8C%85"
+                },
+                malay: {
+                    home: "bahasa-melayu",
+                    laksa: "bahasa-melayu/daun-laksa",
+                    pandan: "bahasa-melayu/daun-pandan",
+                    wolfberry: "bahasa-melayu/daun-goji",
+                    celery: "bahasa-melayu/saderi-cina",
+                    lemongrass: "bahasa-melayu/serai-lemongrass"
+                },
+                tamil: {
+                    home: "%E0%AE%A4%E0%AE%AE%E0%AE%B4",
+                    laksa: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf",
+                    pandan: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf",
+                    wolfberry: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry",
+                    celery: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery",
+                    lemongrass: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass"
+                }
+            };
 
-            // Logic Table
-            if (currentLang === "english") {
-                if (currentHerb === "home") targetPage = "english";
-                else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
-                else if (currentHerb === "pandan") targetPage = "english/pandan-leaf";
-                else if (currentHerb === "wolfberry") targetPage = "english/wolfberry-leaf";
-                else if (currentHerb === "celery") targetPage = "english/chinese-celery";
-                else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
-            } 
-            else if (currentLang === "chinese") {
-                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87";
-                else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
-                else if (currentHerb === "pandan") targetPage = "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6";
-                else if (currentHerb === "wolfberry") targetPage = "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6";
-                else if (currentHerb === "celery") targetPage = "%E4%B8%AD%E6%96%87/%E8%8A%B9%E8%8F%9C";
-                else if (currentHerb === "lemongrass") targetPage = "%E4%B8%AD%E6%96%87/%E9%A6%99%E8%8C%85";
-            } 
-            else if (currentLang === "malay") {
-                if (currentHerb === "home") targetPage = "bahasa-melayu";
-                else if (currentHerb === "laksa") targetPage = "bahasa-melayu/daun-laksa";
-                else if (currentHerb === "pandan") targetPage = "bahasa-melayu/daun-pandan";
-                else if (currentHerb === "wolfberry") targetPage = "bahasa-melayu/daun-goji";
-                else if (currentHerb === "celery") targetPage = "bahasa-melayu/saderi-cina";
-                else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
-            } 
-            else if (currentLang === "tamil") {
-                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4";
-                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
-                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
-                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
-                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery";
-                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
-            }
+            // 3. Find the path
+            const targetPage = paths[currentLang][currentHerb];
 
-            if (targetPage !== "") {
+            // 4. Execution
+            if (targetPage) {
                 window.open(baseUrl + targetPage, "LibraryDisplayTab");
                 document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
             }
