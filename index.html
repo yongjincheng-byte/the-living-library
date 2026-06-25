@@ -33,41 +33,58 @@
         <h3>How to operate:</h3>
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
-            <li>Click "Connect Scanner" to initialize.</li>
-            <li>Click "Launch Kiosk" to open the display tab.</li>
+            <li>Click "Connect to the Living Library".</li>
+            <li>Click "Launch the Living Library Website".</li>
+            <li>Follow the library website tabs.</li>
         </ol>
     </div>
 
     <div class="btn-group">
-        <button onclick="startController()">Connect Scanner</button>
-        <button onclick="openDisplay()">Launch Kiosk</button>
+        <button onclick="startController()">Connect to the Living Library</button>
+        <button onclick="openDisplay()">Launch the Living Library Website</button>
     </div>
 
     <div id="status">Waiting for connection...</div>
 
     <script>
-        const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
+        let currentHerb = "home"; 
+        let currentLang = "english"; 
+
+        const paths = {
+            english: { home: "english", laksa: "english/laksa-leaf", pandan: "english/pandan-leaf", wolfberry: "english/wolfberry-leaf", celery: "english/chinese-celery", lemongrass: "english/lemongrass" },
+            chinese: { home: "%E4%B8%AD%E6%96%87", laksa: "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6", pandan: "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6", wolfberry: "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6", celery: "%E4%B8%AD%E6%96%87/%E8%8A%B9%E8%8F%9C", lemongrass: "%E4%B8%AD%E6%96%87/%E9%A6%99%E8%8C%85" },
+            malay: { home: "bahasa-melayu", laksa: "bahasa-melayu/daun-laksa", pandan: "bahasa-melayu/daun-pandan", wolfberry: "bahasa-melayu/daun-goji", celery: "bahasa-melayu/saderi-cina", lemongrass: "bahasa-melayu/serai-lemongrass" },
+            tamil: { home: "%E0%AE%A4%E0%AE%AE%E0%AE%B4", laksa: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf", pandan: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf", wolfberry: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry", celery: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery", lemongrass: "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass" }
+        };
 
         function openDisplay() {
-            window.open(baseUrl + "english", "LibraryDisplayTab");
+            window.open("https://sites.google.com/students.edu.sg/the-living-library/", "LibraryDisplayTab");
+            currentHerb = "home";
             document.getElementById('status').innerText = "Presentation tab launched!";
         }
 
         function navigateDisplay(scanResult) {
             const input = scanResult.toLowerCase();
-            document.getElementById('status').innerText = "Heard: " + input;
             
-            let targetPage = "";
+            // Decoupled detection
+            if (input.includes("english")) currentLang = "english";
+            else if (input.includes("chinese")) currentLang = "chinese";
+            else if (input.includes("malay")) currentLang = "malay";
+            else if (input.includes("tamil")) currentLang = "tamil";
+            
+            if (input.includes("laksa")) currentHerb = "laksa";
+            else if (input.includes("pandan")) currentHerb = "pandan";
+            else if (input.includes("wolfberry")) currentHerb = "wolfberry";
+            else if (input.includes("celery")) currentHerb = "celery";
+            else if (input.includes("lemongrass")) currentHerb = "lemongrass";
+            else if (input.includes("home")) currentHerb = "home";
 
-            if (input.includes("laksa")) targetPage = "english/laksa-leaf";
-            else if (input.includes("pandan")) targetPage = "english/pandan-leaf";
-            else if (input.includes("wolfberry")) targetPage = "english/wolfberry-leaf";
-            else if (input.includes("celery")) targetPage = "english/chinese-celery";
-            else if (input.includes("lemongrass")) targetPage = "english/lemongrass";
-            else if (input.includes("home")) targetPage = "english";
+            const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
+            let targetPage = paths[currentLang][currentHerb];
 
-            if (targetPage !== "") {
+            if (targetPage) {
                 window.open(baseUrl + targetPage, "LibraryDisplayTab");
+                document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
             }
         }
 
