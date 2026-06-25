@@ -10,7 +10,7 @@
         button:hover { transform: scale(1.05); }
         #status { margin-top: 20px; font-size: 1.5rem; opacity: 0.8; font-weight: bold; }
         .box { border: 2px solid white; padding: 20px; border-radius: 15px; margin-top: 20px; background: rgba(255,255,255,0.1); width: 80%; max-width: 600px; }
-        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; } /* Hidden until activated */
+        video { width: 100%; max-width: 400px; border-radius: 10px; border: 3px solid white; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -35,11 +35,9 @@
     <button onclick="openDisplay()" style="background: #1e5d3a; color: white; border: 2px solid white;">Open Presentation Tab</button>
 
     <script>
-        // --- MEMORY TRACKERS (Remembers what page and language the user is currently looking at) ---
         let currentHerb = "home"; 
         let currentLang = "english"; 
 
-        // --- 1. DISPLAY MANAGEMENT ---
         function openDisplay() {
             window.open("https://sites.google.com/students.edu.sg/the-living-library/view-herbs", "LibraryDisplayTab");
             currentHerb = "home";
@@ -49,40 +47,40 @@
 
         function navigateDisplay(scanResult) {
             const cleanScan = scanResult.replace(/["']/g, "").trim().toLowerCase();
-            console.log("Raw Input Received:", cleanScan);
+            console.log("Processing checked link routing:", cleanScan);
 
-            // STEP 1: Identify if the micro:bit sent a language change
-            if (cleanScan.includes("english") || cleanScan === "a") {
+            // Catch short/cut-off language markers cleanly
+            if (cleanScan.includes("engl") || cleanScan === "a") {
                 currentLang = "english";
-            } else if (cleanScan.includes("chinese") || cleanScan === "b") {
+            } else if (cleanScan.includes("chin") || cleanScan === "b") {
                 currentLang = "chinese";
-            } else if (cleanScan.includes("malay") || cleanScan === "c") {
+            } else if (cleanScan.includes("mala") || cleanScan === "c") {
                 currentLang = "malay";
-            } else if (cleanScan.includes("tamil") || cleanScan === "e") {
+            } else if (cleanScan.includes("tami") || cleanScan === "e") {
                 currentLang = "tamil";
             } 
             
-            // STEP 2: Identify if the micro:bit scanned a new herb
-            else if (cleanScan.includes("laksa")) {
+            // Catch short/cut-off herb names safely
+            else if (cleanScan.includes("laks")) {
                 currentHerb = "laksa";
-            } else if (cleanScan.includes("pandan")) {
+            } else if (cleanScan.includes("pand")) {
                 currentHerb = "pandan";
-            } else if (cleanScan.includes("wolfberry")) {
-                currentHerb = "wolfberry";
-            } else if (cleanScan.includes("celery")) {
+            } else if (cleanScan.includes("wolf") || cleanScan.includes("wolb") || cleanScan.includes("woli")) {
+                currentHerb = "wolfberry"; 
+            } else if (cleanScan.includes("cele") || cleanScan.includes("cely")) {
                 currentHerb = "celery";
-            } else if (cleanScan.includes("lemongrass")) {
+            } else if (cleanScan.includes("lemo") || cleanScan.includes("gong")) {
                 currentHerb = "lemongrass";
             } else if (cleanScan.includes("home")) {
                 currentHerb = "home";
             } else {
-                return; // Ignore lines that don't match anything
+                return; 
             }
 
-            // STEP 3: Combine currentLang + currentHerb to build the exact target URL
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
+            // --- AUDITED ROUTING TABLES ---
             if (currentLang === "english") {
                 if (currentHerb === "home") targetPage = "english";
                 else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
@@ -92,7 +90,7 @@
                 else if (currentHerb === "lemongrass") targetPage = "english/lemongrass";
             } 
             else if (currentLang === "chinese") {
-                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; // Google Sites URL formatting for "中文"
+                if (currentHerb === "home") targetPage = "%E4%B8%AD%E6%96%87"; 
                 else if (currentHerb === "laksa") targetPage = "%E4%B8%AD%E6%96%87/%E5%8F%BB%E6%B2%99%E5%8F%B6";
                 else if (currentHerb === "pandan") targetPage = "%E4%B8%AD%E6%96%87/%E6%96%91%E5%85%B0%E5%8F%B6";
                 else if (currentHerb === "wolfberry") targetPage = "%E4%B8%AD%E6%96%87/%E6%9E%B8%E6%9D%9E%E5%8F%B6";
@@ -108,7 +106,7 @@
                 else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
             } 
             else if (currentLang === "tamil") {
-                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; // Google Sites URL formatting for "தமிழ்"
+                if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4"; 
                 else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
                 else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
                 else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
@@ -116,14 +114,12 @@
                 else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
-            // STEP 4: Fire the tab redirection instantly exactly like your original layout
             if (targetPage !== "") {
                 window.open(baseUrl + targetPage, "LibraryDisplayTab");
                 document.getElementById('status').innerText = `Active View: ${currentHerb.toUpperCase()} (${currentLang.toUpperCase()})`;
             }
         }
 
-        // --- 2. REAL HARDWARE USB CONNECTION ---
         async function startController() {
             try {
                 let port;
@@ -141,7 +137,6 @@
                 const textDecoder = new TextDecoderStream();
                 port.readable.pipeTo(textDecoder.writable);
                 const reader = textDecoder.readable.getReader();
-                
                 let incomingData = "";
                 
                 while (true) {
@@ -160,7 +155,6 @@
             }
         }
 
-        // --- 3. THE MAGIC WEBCAM ILLUSION ---
         function startWebcam() {
             const videoElement = document.getElementById('webcam');
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -169,7 +163,7 @@
                     videoElement.srcObject = stream;
                 })
                 .catch(function(err) {
-                    alert("Could not find a webcam! Make sure you gave the browser permission when asked.");
+                    alert("Could not find a webcam!");
                 });
         }
     </script>
