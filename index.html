@@ -33,9 +33,9 @@
         <h3>How to operate:</h3>
         <ol>
             <li>Ensure the Scanner is plugged into the laptop USB port.</li>
-            <li>Click "Connect to the Living Library" to initialize the hardware.</li>
-            <li>Click "Launch the Living Library Website" to open the display tab.</li>
-            <li>Follow the instructions provided in the library website tabs.</li>
+            <li>Click "Connect to the Living Library".</li>
+            <li>Click "Launch the Living Library Website".</li>
+            <li>Follow the library website tabs.</li>
         </ol>
     </div>
 
@@ -59,7 +59,7 @@
         function navigateDisplay(scanResult) {
             const scanLower = scanResult.toLowerCase();
 
-            // 1. Update states
+            // Detect Language or Herb
             if (scanLower.includes("english")) currentLang = "english";
             else if (scanLower.includes("chinese")) currentLang = "chinese";
             else if (scanLower.includes("malay")) currentLang = "malay";
@@ -74,7 +74,7 @@
             const baseUrl = "https://sites.google.com/students.edu.sg/the-living-library/";
             let targetPage = "";
 
-            // 2. Logic: Context-aware mapping
+            // Logic Table
             if (currentLang === "english") {
                 if (currentHerb === "home") targetPage = "english";
                 else if (currentHerb === "laksa") targetPage = "english/laksa-leaf";
@@ -100,16 +100,14 @@
                 else if (currentHerb === "lemongrass") targetPage = "bahasa-melayu/serai-lemongrass";
             } 
             else if (currentLang === "tamil") {
-                // UPDATE THESE PATHS TO MATCH YOUR LIVE GOOGLE SITE URLS
                 if (currentHerb === "home") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4";
-                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/laksa-leaf";
-                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/pandan-leaf";
-                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/wolfberry";
-                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/chinese-celery";
-                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/lemongrass";
+                else if (currentHerb === "laksa") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%85%E0%AE%A9%E0%AE%9A%E0%AE%9A-%E0%AE%87%E0%AE%B2laksa-leaf";
+                else if (currentHerb === "pandan") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%AA%E0%AE%A3%E0%AE%9F%E0%AE%A9-%E0%AE%87%E0%AE%B2pandan-leaf";
+                else if (currentHerb === "wolfberry") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%95%E0%AE%9C-%E0%AE%87%E0%AE%B2wolfberry";
+                else if (currentHerb === "celery") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%9A%E0%AE%A9-%E0%AE%9A%E0%AE%B2%E0%AE%B0chinese-celery";
+                else if (currentHerb === "lemongrass") targetPage = "%E0%AE%A4%E0%AE%AE%E0%AE%B4/%E0%AE%87%E0%AE%9E%E0%AE%9A-%E0%AE%AA%E0%AE%B2lemongrass";
             }
 
-            // 3. Execution
             if (targetPage !== "") {
                 window.open(baseUrl + targetPage, "LibraryDisplayTab");
                 document.getElementById('status').innerText = `Active: ${currentHerb} (${currentLang})`;
